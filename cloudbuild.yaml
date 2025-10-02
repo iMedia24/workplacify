@@ -1,7 +1,7 @@
 # Cloud Build configuration that mimics Render's deployment process
 steps:
-  # Build the container image (mimics Render's build process with DATABASE_URL)
-  - name: 'gcr.io/cloud-builders/docker'
+  # Get DATABASE_URL from Secret Manager first
+  - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -11,9 +11,22 @@ steps:
         
         # Debug: Show what we got from Secret Manager
         echo "DEBUG: Raw DATABASE_URL from secret:"
-        echo "$$DATABASE_URL" | hexdump -C
+        echo "$$DATABASE_URL" | od -c
         echo "DEBUG: DATABASE_URL length: $${#DATABASE_URL}"
         echo "DEBUG: DATABASE_URL value: '$$DATABASE_URL'"
+        
+        # Save to file for next step
+        echo -n "$$DATABASE_URL" > /workspace/database_url
+
+  # Build the container image (mimics Render's build process with DATABASE_URL)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Read DATABASE_URL from file
+        DATABASE_URL=$$(cat /workspace/database_url)
+        echo "DEBUG: Building with DATABASE_URL: '$$DATABASE_URL'"
         
         # Build with DATABASE_URL build arg (like Render provides during build)
         docker build \
