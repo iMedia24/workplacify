@@ -143,6 +143,7 @@ create_or_update_secret "admin-emails" "admin@yourcompany.com"
 echo "🔑 Setting up IAM permissions..."
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 CLOUD_BUILD_SA="$PROJECT_NUMBER@cloudbuild.gserviceaccount.com"
+COMPUTE_SA="$PROJECT_NUMBER-compute@developer.gserviceaccount.com"
 
 # Create Cloud Run service account if it doesn't exist
 echo "🏃 Setting up Cloud Run service account..."
@@ -179,6 +180,7 @@ grant_secret_access() {
 # Grant permissions to all secrets
 for secret in database-url nextauth-secret google-client-id google-client-secret cloudinary-api-key cloudinary-api-secret cloudinary-name microsoft-entra-client-id microsoft-entra-client-secret microsoft-entra-issuer admin-emails; do
   grant_secret_access $secret "serviceAccount:$CLOUD_BUILD_SA" "roles/secretmanager.secretAccessor"
+  grant_secret_access $secret "serviceAccount:$COMPUTE_SA" "roles/secretmanager.secretAccessor"
   grant_secret_access $secret "serviceAccount:$CLOUD_RUN_SA" "roles/secretmanager.secretAccessor"
 done
 
