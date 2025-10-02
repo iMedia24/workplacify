@@ -14,7 +14,13 @@ RUN npm ci --only=production --ignore-scripts && npm run generate
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy package files and install ALL dependencies (including dev)
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma
+RUN npm ci --ignore-scripts
+
+# Copy source code
 COPY . .
 
 # Generate Prisma client
