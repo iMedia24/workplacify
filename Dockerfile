@@ -17,10 +17,15 @@ COPY . .
 # Generate Prisma client (part of Render's build process)
 RUN npx prisma generate
 
-# Set DATABASE_URL for build process (mimics Render's envVars from database)
+# Set environment variables for build process (mimics Render's envVars)
 # This is needed for Next.js environment validation during build
 ARG DATABASE_URL
+ARG NEXTAUTH_SECRET
+ARG NODE_ENV=production
+
 ENV DATABASE_URL=$DATABASE_URL
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV NODE_ENV=$NODE_ENV
 
 # Debug: Echo the DATABASE_URL to see what we're getting
 RUN echo "DEBUG: DATABASE_URL length: ${#DATABASE_URL}"

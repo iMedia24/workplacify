@@ -28,9 +28,14 @@ steps:
         DATABASE_URL=$$(cat /workspace/database_url)
         echo "DEBUG: Building with DATABASE_URL: '$$DATABASE_URL'"
         
-        # Build with DATABASE_URL build arg (like Render provides during build)
+        # Get other essential environment variables for build (like Render provides)
+        NEXTAUTH_SECRET=$$(gcloud secrets versions access latest --secret="nextauth-secret")
+        
+        # Build with all necessary build args (like Render provides during build)
         docker build \
           --build-arg DATABASE_URL="$$DATABASE_URL" \
+          --build-arg NEXTAUTH_SECRET="$$NEXTAUTH_SECRET" \
+          --build-arg NODE_ENV="production" \
           -t gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID \
           .
   
