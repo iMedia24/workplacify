@@ -54,12 +54,12 @@ steps:
           --build-arg MICROSOFT_ENTRA_CLIENT_SECRET="$$MICROSOFT_ENTRA_CLIENT_SECRET" \
           --build-arg MICROSOFT_ENTRA_ISSUER="$$MICROSOFT_ENTRA_ISSUER" \
           --build-arg NODE_ENV="production" \
-          -t us-central1-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID \
+          -t us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID \
           .
 
   # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID']
+    args: ['push', 'us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID']
   
   # Run database migrations (like Render's initialDeployHook would)
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -72,7 +72,7 @@ steps:
         
         # Create a temporary Cloud Run job to run migrations
         gcloud run jobs replace migration-job \
-          --image=us-central1-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID \
+          --image=us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID \
           --region=us-central1 \
           --set-env-vars="DATABASE_URL=$$DATABASE_URL,NODE_ENV=production" \
           --task-timeout=600 \
@@ -84,7 +84,7 @@ steps:
           --service-account=workplacify-app-sa@$PROJECT_ID.iam.gserviceaccount.com \
           --add-cloudsql-instances=$PROJECT_ID:us-central1:workplacify-db 2>/dev/null || \
         gcloud run jobs create migration-job \
-          --image=us-central1-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID \
+          --image=us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID \
           --region=us-central1 \
           --set-env-vars="DATABASE_URL=$$DATABASE_URL,NODE_ENV=production" \
           --task-timeout=600 \
@@ -107,7 +107,7 @@ steps:
       - 'deploy'
       - 'workplacify-app'
       - '--image'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID'
+      - 'us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -137,7 +137,7 @@ steps:
       - '$PROJECT_ID:us-central1:workplacify-db'
 
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID'
+  - 'us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID'
 
 options:
   logging: CLOUD_LOGGING_ONLY
