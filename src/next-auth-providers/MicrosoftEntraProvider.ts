@@ -9,8 +9,8 @@ type MicrosoftEntraConfig = {
 export const MicrosoftEntraProvider = (
   config: MicrosoftEntraConfig,
 ): Provider => {
-  // Extract tenant ID from the issuer URL
-  const tenantId = config.issuer.match(/\/([^\/]+)\/wsfed$/)?.[1] || "common";
+  // Extract tenant ID from the issuer URL (defensive against undefined issuer)
+  const tenantId = config.issuer?.match(/\/([^\/]+)\/wsfed$/)?.[1] || "common";
 
   return {
     id: "microsoft-entra-id",

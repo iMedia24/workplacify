@@ -1,0 +1,51 @@
+# Simplified Cloud Build configuration - just deploy the app
+steps:
+  # Build the container image with a timestamp tag
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID', '.']
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID']
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'workplacify-app'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '3000'
+      - '--cpu'
+      - '1'
+      - '--memory'
+      - '512Mi'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '10'
+      - '--concurrency'
+      - '80'
+      - '--timeout'
+      - '300'
+      - '--set-env-vars'
+      - 'NODE_ENV=production'
+      - '--set-secrets'
+      - 'DATABASE_URL=database-url:latest,NEXTAUTH_SECRET=nextauth-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,CLOUDINARY_API_SECRET=cloudinary-api-secret:latest,CLOUDINARY_API_KEY=cloudinary-api-key:latest,CLOUDINARY_NAME=cloudinary-name:latest,MICROSOFT_ENTRA_CLIENT_ID=microsoft-entra-client-id:latest,MICROSOFT_ENTRA_CLIENT_SECRET=microsoft-entra-client-secret:latest,MICROSOFT_ENTRA_ISSUER=microsoft-entra-issuer:latest,ADMIN_EMAILS=admin-emails:latest'
+      - '--service-account'
+      - 'workplacify-app-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--add-cloudsql-instances'
+      - '$PROJECT_ID:us-central1:workplacify-db'
+
+images:
+  - 'gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
