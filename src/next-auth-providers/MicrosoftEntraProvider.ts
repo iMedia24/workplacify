@@ -9,48 +9,55 @@ type MicrosoftEntraConfig = {
 export const MicrosoftEntraProvider = (
   config: MicrosoftEntraConfig,
 ): Provider => {
+  // Extract tenant ID from the issuer URL
+  const tenantId = config.issuer.match(/\/([^\/]+)\/wsfed$/)?.[1] || "common";
+
   return {
     id: "microsoft-entra-id",
     name: "Microsoft Entra ID",
-    type: "oauth", // "oidc",
+    type: "oauth",
     idToken: true,
     client: { token_endpoint_auth_method: "client_secret_post" },
-    issuer: "https://microsoftonline.com",
+    issuer: `https://login.microsoftonline.com/${tenantId}/v2.0`,
     authorization: {
-      url: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+      url: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`,
       params: { scope: "openid profile email User.Read" },
     },
-    wellKnown:
-      "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
+    wellKnown: `https://login.microsoftonline.com/${tenantId}/v2.0/.well-known/openid-configuration`,
     checks: ["state"],
     token: {
-      url: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      url: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
     },
     async profile(profile: any, tokens: any) {
-      // https://learn.microsoft.com/en-us/graph/api/profilephoto-get?view=graph-rest-1.0&tabs=http#examples
-      const response = await fetch(
-        `https://graph.microsoft.com/v1.0/me/photos/${648}x${648}/$value`,
-        { headers: { Authorization: `Bearer ${tokens.access_token}` } },
-      );
+      console.log("Microsoft profile data:", profile);
 
-      // Confirm that profile photo was returned
-      let image;
-      // TODO: Do this without Buffer
-      if (response.ok && typeof Buffer !== "undefined") {
-        try {
-          const pictureBuffer = await response.arrayBuffer();
-          const pictureBase64 = Buffer.from(pictureBuffer).toString("base64");
-          image = `data:image/jpeg;base64, ${pictureBase64}`;
-        } catch {}
+      // Try to get profile photo, but don't let it fail the whole auth process
+      let image = null;
+      try {
+        if (tokens?.access_token) {
+          const response = await fetch(
+            `https://graph.microsoft.com/v1.0/me/photos/648x648/$value`,
+            { headers: { Authorization: `Bearer ${tokens.access_token}` } },
+          );
+
+          if (response.ok && typeof Buffer !== "undefined") {
+            const pictureBuffer = await response.arrayBuffer();
+            const pictureBase64 = Buffer.from(pictureBuffer).toString("base64");
+            image = `data:image/jpeg;base64, ${pictureBase64}`;
+          }
+        }
+      } catch (error) {
+        console.log("Failed to fetch profile photo:", error);
       }
 
       const realProfile = {
-        id: profile.sub,
-        name: profile.name,
-        email: profile.email,
-        image: image ?? null,
+        id: profile.sub || profile.oid || profile.id,
+        name: profile.name || profile.displayName,
+        email: profile.email || profile.preferred_username || profile.upn,
+        image: image,
       };
 
+      console.log("Mapped profile:", realProfile);
       return realProfile;
     },
     style: {

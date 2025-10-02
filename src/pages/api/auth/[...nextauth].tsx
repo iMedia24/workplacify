@@ -30,7 +30,20 @@ const microsoftEntraProvider = MicrosoftEntraProvider({
   issuer: process.env.MICROSOFT_ENTRA_ISSUER!,
 });
 
-const adapter = PrismaAdapter(prisma);
+const baseAdapter = PrismaAdapter(prisma);
+
+// Custom adapter to handle Microsoft's ext_expires_in field
+const adapter = {
+  ...baseAdapter,
+  async linkAccount(account: any) {
+    // Transform Microsoft's ext_expires_in to extExpiresIn for Prisma
+    if (account.provider === "microsoft-entra-id" && account.ext_expires_in) {
+      account.extExpiresIn = account.ext_expires_in;
+      delete account.ext_expires_in;
+    }
+    return baseAdapter.linkAccount!(account);
+  },
+};
 
 export const nextAuthOptions: AuthOptions = {
   adapter,
