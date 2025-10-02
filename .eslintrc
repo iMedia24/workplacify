@@ -49,5 +49,6 @@
     "react": {
       "version": "detect"
     }
-  }
+  },
+  "ignorePatterns": ["deploy/**/*"]
 }

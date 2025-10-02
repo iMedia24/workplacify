@@ -32,4 +32,8 @@ module.exports = getConfig({
     locales: ["en", "de"],
     defaultLocale: "en",
   },
+  // Enable standalone output for Docker
+  output: "standalone",
+  // Optimize for production
+  outputFileTracingRoot: process.cwd(),
 });
