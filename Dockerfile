@@ -26,8 +26,8 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
-RUN npm run build
+# Build the application (use build-ci to skip migrations)
+RUN npm run build-ci
 
 # Production image, copy all the files and run next
 FROM base AS runner
