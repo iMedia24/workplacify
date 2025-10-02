@@ -1,22 +1,11 @@
-# Multi-stage build for production optimization
-FROM node:20-alpine AS base
+# Simple production Dockerfile for Next.js app
+FROM node:20-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Set working directory
 WORKDIR /app
 
-# Copy package files and Prisma schema (needed for postinstall)
-COPY package.json package-lock.json* ./
-COPY prisma ./prisma
-RUN npm ci --only=production --ignore-scripts && npm run generate
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-
-# Copy package files and install ALL dependencies (including dev)
-COPY package.json package-lock.json* ./
+# Install dependencies
+COPY package*.json ./
 COPY prisma ./prisma
 RUN npm ci --ignore-scripts
 
@@ -26,37 +15,16 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application (use build-ci to skip migrations)
+# Build the application
 RUN npm run build-ci
 
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy Prisma files
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-USER nextjs
-
+# Expose port
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Start the application
+CMD ["npm", "start"]
