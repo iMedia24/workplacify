@@ -17,6 +17,11 @@ COPY . .
 # Generate Prisma client (part of Render's build process)
 RUN npx prisma generate
 
+# Set DATABASE_URL for build process (mimics Render's envVars from database)
+# This is needed for Next.js environment validation during build
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
 # Build the app (using build-ci to skip migrations since we handle them separately)
 RUN npm run build-ci
 

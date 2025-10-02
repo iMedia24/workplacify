@@ -1,8 +1,19 @@
 # Cloud Build configuration that mimics Render's deployment process
 steps:
-  # Build the container image (mimics Render's build process)
+  # Build the container image (mimics Render's build process with DATABASE_URL)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID', '.']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get DATABASE_URL from Secret Manager (mimics Render's fromDatabase)
+        DATABASE_URL=$$(gcloud secrets versions access latest --secret="database-url")
+        
+        # Build with DATABASE_URL build arg (like Render provides during build)
+        docker build \
+          --build-arg DATABASE_URL="$$DATABASE_URL" \
+          -t gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID \
+          .
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
