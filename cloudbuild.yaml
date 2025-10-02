@@ -9,6 +9,12 @@ steps:
         # Get DATABASE_URL from Secret Manager (mimics Render's fromDatabase)
         DATABASE_URL=$$(gcloud secrets versions access latest --secret="database-url")
         
+        # Debug: Show what we got from Secret Manager
+        echo "DEBUG: Raw DATABASE_URL from secret:"
+        echo "$$DATABASE_URL" | hexdump -C
+        echo "DEBUG: DATABASE_URL length: $${#DATABASE_URL}"
+        echo "DEBUG: DATABASE_URL value: '$$DATABASE_URL'"
+        
         # Build with DATABASE_URL build arg (like Render provides during build)
         docker build \
           --build-arg DATABASE_URL="$$DATABASE_URL" \

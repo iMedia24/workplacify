@@ -22,6 +22,11 @@ RUN npx prisma generate
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
+# Debug: Echo the DATABASE_URL to see what we're getting
+RUN echo "DEBUG: DATABASE_URL length: ${#DATABASE_URL}"
+RUN echo "DEBUG: DATABASE_URL value: '$DATABASE_URL'"
+RUN echo "DEBUG: DATABASE_URL ends with: '$(echo "$DATABASE_URL" | tail -c 10)'"
+
 # Build the app (using build-ci to skip migrations since we handle them separately)
 RUN npm run build-ci
 
