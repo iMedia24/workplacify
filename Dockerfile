@@ -1,31 +1,32 @@
-# Simple production Dockerfile for Next.js app
+# Dockerfile that mimics Render's deployment process exactly
 FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy package files and prisma schema
 COPY package*.json ./
 COPY prisma ./prisma
-RUN npm ci --ignore-scripts
 
-# Copy source code
+# Install dependencies exactly like Render: npm install --include=dev
+RUN npm install --include=dev
+
+# Copy all source code
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client (part of Render's build process)
 RUN npx prisma generate
 
-# Build the application with dummy DATABASE_URL
-ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+# Build the app (using build-ci to skip migrations since we handle them separately)
 RUN npm run build-ci
 
 # Expose port
 EXPOSE 3000
 
-# Set environment
+# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Start the application
-CMD ["npm", "start"]
+# Start exactly like Render: npm run start
+CMD ["npm", "run", "start"]

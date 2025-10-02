@@ -1,6 +1,6 @@
-# Cloud Build configuration for automated deployment
+# Cloud Build configuration that mimics Render's deployment process
 steps:
-  # Build the container image with a timestamp tag
+  # Build the container image (mimics Render's build process)
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID', '.']
   
@@ -8,7 +8,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID']
   
-  # Run database migrations
+  # Run database migrations (like Render's initialDeployHook would)
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'bash'
     args:
@@ -17,29 +17,37 @@ steps:
         # Get database connection string from Secret Manager
         DATABASE_URL=$$(gcloud secrets versions access latest --secret="database-url")
         
-        # Run Prisma migrations using Cloud Run job
-        gcloud run jobs replace --region=us-central1 --image=gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID \
-          --set-env-vars="DATABASE_URL=$$DATABASE_URL" \
+        # Create a temporary Cloud Run job to run migrations
+        gcloud run jobs replace migration-job \
+          --image=gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID \
+          --region=us-central1 \
+          --set-env-vars="DATABASE_URL=$$DATABASE_URL,NODE_ENV=production" \
           --task-timeout=600 \
           --max-retries=3 \
           --parallelism=1 \
           --task-count=1 \
           --cpu=1 \
           --memory=512Mi \
-          migration-job || \
-        gcloud run jobs create migration-job --region=us-central1 --image=gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID \
-          --set-env-vars="DATABASE_URL=$$DATABASE_URL" \
+          --service-account=workplacify-app-sa@$PROJECT_ID.iam.gserviceaccount.com \
+          --add-cloudsql-instances=$PROJECT_ID:us-central1:workplacify-db 2>/dev/null || \
+        gcloud run jobs create migration-job \
+          --image=gcr.io/$PROJECT_ID/workplacify-app:build-$BUILD_ID \
+          --region=us-central1 \
+          --set-env-vars="DATABASE_URL=$$DATABASE_URL,NODE_ENV=production" \
           --task-timeout=600 \
           --max-retries=3 \
           --parallelism=1 \
           --task-count=1 \
           --cpu=1 \
-          --memory=512Mi
+          --memory=512Mi \
+          --service-account=workplacify-app-sa@$PROJECT_ID.iam.gserviceaccount.com \
+          --add-cloudsql-instances=$PROJECT_ID:us-central1:workplacify-db
         
+        # Execute migrations and seeding (like Render's build process)
         gcloud run jobs execute migration-job --region=us-central1 --wait \
           --overrides='{"spec":{"template":{"spec":{"template":{"spec":{"containers":[{"name":"migration-job","command":["sh","-c","npx prisma migrate deploy && npx tsx prisma/seed-production.ts"]}]}}}}}}'
   
-  # Deploy to Cloud Run
+  # Deploy to Cloud Run (mimics Render's web service deployment)
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
