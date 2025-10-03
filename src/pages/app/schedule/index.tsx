@@ -197,11 +197,21 @@ const SchedulePage = () => {
                         getFloorsForCurrentOfficeQuery.data?.length || 0;
 
                       let floorDeskName = t("floorDeskNameSoloFloor", {
+                        entityName: freeDeskSchedules.desk.floor.name
+                          .toLowerCase()
+                          .includes("bed")
+                          ? "Bed"
+                          : "Desk",
                         deskId: freeDeskSchedules.desk.publicDeskId,
                       });
 
                       if (numberOfFloors >= 2) {
                         floorDeskName = t("floorDeskName", {
+                          entityName: freeDeskSchedules.desk.floor.name
+                            .toLowerCase()
+                            .includes("bed")
+                            ? "Bed"
+                            : "Desk",
                           floorName: freeDeskSchedules.desk.floor.name,
                           deskId: freeDeskSchedules.desk.publicDeskId,
                         });

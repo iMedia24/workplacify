@@ -146,7 +146,7 @@
     "noSchedules": "No schedules",
     "headingSchedule": "Schedule",
     "headingAllDesks": "All desks",
-    "listOfDesks": "List of all desks",
+    "listOfDesks": "List of all resources",
     "errorTitleWhileBooking": "Error while booking a desk",
     "errorDescriptionWhileBooking": "You have booked a desk already in this office for this day.",
     "badgeLabelAvailable": "Available",
@@ -156,14 +156,14 @@
     "customNameForThisDesk": "Custom name for this desk",
     "cancelReservation": "Cancel reservation",
     "bookDesk": "Book",
-    "floorDeskName": "{floorName} - Desk {deskId}",
-    "deskName": "Desk #{deskId}",
+    "floorDeskName": "{floorName} - {entityName} {deskId}",
+    "deskName": "{entityName} #{deskId}",
     "bookDeskWithName": "Book {deskName}",
     "doYouWantToBookIt": "Do you want to book it?",
     "close": "Close",
     "bookDeskForDay": "Book for the day",
     "zoomControls": "Zoom controls",
-    "floorDeskNameSoloFloor": "Desk {deskId}"
+    "floorDeskNameSoloFloor": "{entityName} {deskId}"
   },
   "UserSettings": {
     "toastTitleAccountUpdated": "Account updated.",

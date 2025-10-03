@@ -99,6 +99,11 @@ export const FloorDeskBooker = (props: FloorDeskBookerProps) => {
   const deskName =
     selectedDeskWithPeriods?.desk.name ||
     t("deskName", {
+      entityName: selectedDeskWithPeriods?.desk.floor.name
+        .toLowerCase()
+        .includes("bed")
+        ? "Bed"
+        : "Desk",
       deskId: selectedDeskWithPeriods?.desk.publicDeskId,
     });
 
