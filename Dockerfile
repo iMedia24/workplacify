@@ -45,10 +45,6 @@ ENV MICROSOFT_ENTRA_CLIENT_SECRET=$MICROSOFT_ENTRA_CLIENT_SECRET
 ENV MICROSOFT_ENTRA_ISSUER=$MICROSOFT_ENTRA_ISSUER
 ENV NODE_ENV=$NODE_ENV
 
-# Debug: Echo the DATABASE_URL to see what we're getting
-RUN echo "DEBUG: DATABASE_URL length: ${#DATABASE_URL}"
-RUN echo "DEBUG: DATABASE_URL value: '$DATABASE_URL'"
-RUN echo "DEBUG: DATABASE_URL ends with: '$(echo "$DATABASE_URL" | tail -c 10)'"
 
 # Build the app (using build-ci to skip migrations since we handle them separately)
 RUN npm run build-ci

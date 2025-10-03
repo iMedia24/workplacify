@@ -1,140 +1,72 @@
 # Cloud Build configuration that mimics Render's deployment process
 steps:
-  # Get all secrets from Secret Manager first
-  - name: "gcr.io/cloud-builders/gcloud"
-    entrypoint: "bash"
+  # Build the container image with secrets retrieved directly as build args
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
     args:
-      - "-c"
+      - '-c'
       - |
-        # Get all secrets from Secret Manager
-        DATABASE_URL=$$(gcloud secrets versions access latest --secret="database-url")
-        NEXTAUTH_SECRET=$$(gcloud secrets versions access latest --secret="nextauth-secret")
-        NEXTAUTH_URL=$$(gcloud secrets versions access latest --secret="nextauth-url")
-        GOOGLE_CLIENT_ID=$$(gcloud secrets versions access latest --secret="google-client-id")
-        GOOGLE_CLIENT_SECRET=$$(gcloud secrets versions access latest --secret="google-client-secret")
-        CLOUDINARY_API_KEY=$$(gcloud secrets versions access latest --secret="cloudinary-api-key")
-        CLOUDINARY_API_SECRET=$$(gcloud secrets versions access latest --secret="cloudinary-api-secret")
-        CLOUDINARY_NAME=$$(gcloud secrets versions access latest --secret="cloudinary-name")
-        MICROSOFT_ENTRA_CLIENT_ID=$$(gcloud secrets versions access latest --secret="microsoft-entra-client-id")
-        MICROSOFT_ENTRA_CLIENT_SECRET=$$(gcloud secrets versions access latest --secret="microsoft-entra-client-secret")
-        MICROSOFT_ENTRA_ISSUER=$$(gcloud secrets versions access latest --secret="microsoft-entra-issuer")
-
-        # Debug: Show what we got from Secret Manager
-        echo "DEBUG: DATABASE_URL value: '$$DATABASE_URL'"
-        echo "DEBUG: NEXTAUTH_URL value: '$$NEXTAUTH_URL'"
-        echo "DEBUG: DATABASE_URL length: $${#DATABASE_URL}"
-        echo "DEBUG: NEXTAUTH_URL length: $${#NEXTAUTH_URL}"
-
-        # Validate critical secrets
-        if [ -z "$$DATABASE_URL" ]; then
-          echo "ERROR: DATABASE_URL is empty"
-          exit 1
-        fi
-        if [ -z "$$NEXTAUTH_URL" ]; then
-          echo "ERROR: NEXTAUTH_URL is empty"
-          exit 1
-        fi
-        echo "✅ All secrets retrieved successfully"
-
-        # Save all secrets to files for next step
-        echo -n "$$DATABASE_URL" > /workspace/database_url
-        echo -n "$$NEXTAUTH_SECRET" > /workspace/nextauth_secret
-        echo -n "$$NEXTAUTH_URL" > /workspace/nextauth_url
-        echo -n "$$GOOGLE_CLIENT_ID" > /workspace/google_client_id
-        echo -n "$$GOOGLE_CLIENT_SECRET" > /workspace/google_client_secret
-        echo -n "$$CLOUDINARY_API_KEY" > /workspace/cloudinary_api_key
-        echo -n "$$CLOUDINARY_API_SECRET" > /workspace/cloudinary_api_secret
-        echo -n "$$CLOUDINARY_NAME" > /workspace/cloudinary_name
-        echo -n "$$MICROSOFT_ENTRA_CLIENT_ID" > /workspace/microsoft_entra_client_id
-        echo -n "$$MICROSOFT_ENTRA_CLIENT_SECRET" > /workspace/microsoft_entra_client_secret
-        echo -n "$$MICROSOFT_ENTRA_ISSUER" > /workspace/microsoft_entra_issuer
-
-  # Build the container image with all secrets as build args
-  - name: "gcr.io/cloud-builders/docker"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        # Read all secrets from files
-        DATABASE_URL=$$(cat /workspace/database_url)
-        NEXTAUTH_SECRET=$$(cat /workspace/nextauth_secret)
-        NEXTAUTH_URL=$$(cat /workspace/nextauth_url)
-        GOOGLE_CLIENT_ID=$$(cat /workspace/google_client_id)
-        GOOGLE_CLIENT_SECRET=$$(cat /workspace/google_client_secret)
-        CLOUDINARY_API_KEY=$$(cat /workspace/cloudinary_api_key)
-        CLOUDINARY_API_SECRET=$$(cat /workspace/cloudinary_api_secret)
-        CLOUDINARY_NAME=$$(cat /workspace/cloudinary_name)
-        MICROSOFT_ENTRA_CLIENT_ID=$$(cat /workspace/microsoft_entra_client_id)
-        MICROSOFT_ENTRA_CLIENT_SECRET=$$(cat /workspace/microsoft_entra_client_secret)
-        MICROSOFT_ENTRA_ISSUER=$$(cat /workspace/microsoft_entra_issuer)
-
-        echo "DEBUG: Building with DATABASE_URL: '$$DATABASE_URL'"
-        echo "DEBUG: Building with NEXTAUTH_URL: '$$NEXTAUTH_URL'"
+        # Get all secrets and use them directly as build args
         echo "🔨 Building container image..."
-
-        # Build with all necessary build args
+        
         docker build \
-          --build-arg DATABASE_URL="$$DATABASE_URL" \
-          --build-arg NEXTAUTH_SECRET="$$NEXTAUTH_SECRET" \
-          --build-arg NEXTAUTH_URL="$$NEXTAUTH_URL" \
-          --build-arg GOOGLE_CLIENT_ID="$$GOOGLE_CLIENT_ID" \
-          --build-arg GOOGLE_CLIENT_SECRET="$$GOOGLE_CLIENT_SECRET" \
-          --build-arg CLOUDINARY_API_KEY="$$CLOUDINARY_API_KEY" \
-          --build-arg CLOUDINARY_API_SECRET="$$CLOUDINARY_API_SECRET" \
-          --build-arg CLOUDINARY_NAME="$$CLOUDINARY_NAME" \
-          --build-arg MICROSOFT_ENTRA_CLIENT_ID="$$MICROSOFT_ENTRA_CLIENT_ID" \
-          --build-arg MICROSOFT_ENTRA_CLIENT_SECRET="$$MICROSOFT_ENTRA_CLIENT_SECRET" \
-          --build-arg MICROSOFT_ENTRA_ISSUER="$$MICROSOFT_ENTRA_ISSUER" \
+          --build-arg DATABASE_URL="$$(gcloud secrets versions access latest --secret="database-url")" \
+          --build-arg NEXTAUTH_SECRET="$$(gcloud secrets versions access latest --secret="nextauth-secret")" \
+          --build-arg NEXTAUTH_URL="$$(gcloud secrets versions access latest --secret="nextauth-url")" \
+          --build-arg GOOGLE_CLIENT_ID="$$(gcloud secrets versions access latest --secret="google-client-id")" \
+          --build-arg GOOGLE_CLIENT_SECRET="$$(gcloud secrets versions access latest --secret="google-client-secret")" \
+          --build-arg CLOUDINARY_API_KEY="$$(gcloud secrets versions access latest --secret="cloudinary-api-key")" \
+          --build-arg CLOUDINARY_API_SECRET="$$(gcloud secrets versions access latest --secret="cloudinary-api-secret")" \
+          --build-arg CLOUDINARY_NAME="$$(gcloud secrets versions access latest --secret="cloudinary-name")" \
+          --build-arg MICROSOFT_ENTRA_CLIENT_ID="$$(gcloud secrets versions access latest --secret="microsoft-entra-client-id")" \
+          --build-arg MICROSOFT_ENTRA_CLIENT_SECRET="$$(gcloud secrets versions access latest --secret="microsoft-entra-client-secret")" \
+          --build-arg MICROSOFT_ENTRA_ISSUER="$$(gcloud secrets versions access latest --secret="microsoft-entra-issuer")" \
           --build-arg NODE_ENV="production" \
           -t us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID \
           .
 
   # Push the container image to Artifact Registry
-  - name: "gcr.io/cloud-builders/docker"
-    args:
-      [
-        "push",
-        "us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID",
-      ]
-
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID']
+  
   # Deploy to Cloud Run
-  - name: "gcr.io/cloud-builders/gcloud"
+  - name: 'gcr.io/cloud-builders/gcloud'
     args:
-      - "run"
-      - "deploy"
-      - "workplacify-app"
-      - "--image"
-      - "us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID"
-      - "--region"
-      - "us-central1"
-      - "--platform"
-      - "managed"
-      - "--allow-unauthenticated"
-      - "--port"
-      - "3000"
-      - "--cpu"
-      - "1"
-      - "--memory"
-      - "512Mi"
-      - "--min-instances"
-      - "0"
-      - "--max-instances"
-      - "10"
-      - "--concurrency"
-      - "80"
-      - "--timeout"
-      - "300"
-      - "--set-env-vars"
-      - "NODE_ENV=production"
-      - "--set-secrets"
-      - "DATABASE_URL=database-url:latest,NEXTAUTH_SECRET=nextauth-secret:latest,NEXTAUTH_URL=nextauth-url:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,CLOUDINARY_API_SECRET=cloudinary-api-secret:latest,CLOUDINARY_API_KEY=cloudinary-api-key:latest,CLOUDINARY_NAME=cloudinary-name:latest,MICROSOFT_ENTRA_CLIENT_ID=microsoft-entra-client-id:latest,MICROSOFT_ENTRA_CLIENT_SECRET=microsoft-entra-client-secret:latest,MICROSOFT_ENTRA_ISSUER=microsoft-entra-issuer:latest,ADMIN_EMAILS=admin-emails:latest"
-      - "--service-account"
-      - "workplacify-app-sa@$PROJECT_ID.iam.gserviceaccount.com"
-      - "--add-cloudsql-instances"
-      - "$PROJECT_ID:us-central1:workplacify-db"
+      - 'run'
+      - 'deploy'
+      - 'workplacify-app'
+      - '--image'
+      - 'us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '3000'
+      - '--cpu'
+      - '1'
+      - '--memory'
+      - '512Mi'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '10'
+      - '--concurrency'
+      - '80'
+      - '--timeout'
+      - '300'
+      - '--set-env-vars'
+      - 'NODE_ENV=production'
+      - '--set-secrets'
+      - 'DATABASE_URL=database-url:latest,NEXTAUTH_SECRET=nextauth-secret:latest,NEXTAUTH_URL=nextauth-url:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,CLOUDINARY_API_SECRET=cloudinary-api-secret:latest,CLOUDINARY_API_KEY=cloudinary-api-key:latest,CLOUDINARY_NAME=cloudinary-name:latest,MICROSOFT_ENTRA_CLIENT_ID=microsoft-entra-client-id:latest,MICROSOFT_ENTRA_CLIENT_SECRET=microsoft-entra-client-secret:latest,MICROSOFT_ENTRA_ISSUER=microsoft-entra-issuer:latest,ADMIN_EMAILS=admin-emails:latest'
+      - '--service-account'
+      - 'workplacify-app-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--add-cloudsql-instances'
+      - '$PROJECT_ID:us-central1:workplacify-db'
 
 images:
-  - "us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID"
+  - 'us-docker.pkg.dev/$PROJECT_ID/gcr.io/workplacify-app:build-$BUILD_ID'
 
 options:
   logging: CLOUD_LOGGING_ONLY
