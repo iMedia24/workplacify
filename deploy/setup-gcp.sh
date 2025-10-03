@@ -184,18 +184,28 @@ for secret in database-url nextauth-secret google-client-id google-client-secret
   grant_secret_access $secret "serviceAccount:$CLOUD_RUN_SA" "roles/secretmanager.secretAccessor"
 done
 
-# Grant Cloud SQL Client role to Cloud Run service account
+# Grant Cloud SQL roles to Cloud Run service account
 echo "🗄️ Granting Cloud SQL access..."
-EXISTING_SQL_BINDING=$(gcloud projects get-iam-policy $PROJECT_ID --format="value(bindings[?role=='roles/cloudsql.client'].members[])" 2>/dev/null | grep -c "serviceAccount:$CLOUD_RUN_SA" || echo "0")
 
-if [ "$EXISTING_SQL_BINDING" -eq 0 ]; then
-  echo "Granting Cloud SQL client role..."
-  gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:$CLOUD_RUN_SA" \
-    --role="roles/cloudsql.client" >/dev/null 2>&1
-else
-  echo "✅ Cloud SQL permission already exists"
-fi
+# Function to grant Cloud SQL permission if not already granted
+grant_cloudsql_permission() {
+  local role=$1
+  local description=$2
+  
+  EXISTING_BINDING=$(gcloud projects get-iam-policy $PROJECT_ID --format="value(bindings[?role=='$role'].members[])" 2>/dev/null | grep -c "serviceAccount:$CLOUD_RUN_SA" || echo "0")
+  
+  if [ "$EXISTING_BINDING" -eq 0 ]; then
+    echo "Granting $description..."
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+      --member="serviceAccount:$CLOUD_RUN_SA" \
+      --role="$role" >/dev/null 2>&1
+  else
+    echo "✅ $description already exists"
+  fi
+}
+
+grant_cloudsql_permission "roles/cloudsql.client" "Cloud SQL client role"
+grant_cloudsql_permission "roles/cloudsql.instanceUser" "Cloud SQL instance user role"
 
 echo "✅ GCP setup complete!"
 echo ""
