@@ -1,5 +1,5 @@
 import {
-  Badge,
+  // Badge,
   Box,
   Button,
   CloseButton,
@@ -12,14 +12,16 @@ import {
   Icon,
   Portal,
   Spinner,
-  Text,
+  // Text,
   Textarea,
   VStack,
 } from "@chakra-ui/react";
 import { GetServerSideProps } from "next";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { MdOutlineFeedback, MdOutlineTry } from "react-icons/md";
+import { MdOutlineFeedback } from "react-icons/md";
+
+// import { MdOutlineFeedback, MdOutlineTry } from "react-icons/md";
 
 import { useGetStartedModules } from "../../hooks/useGetStartedModules";
 import { getMessages } from "../../messages/getMessages";
@@ -92,7 +94,7 @@ const AppPage = () => {
                   gap={{ base: 2, lg: 4 }}
                   alignItems={"flex-start"}
                 >
-                  <HStack gap={{ base: 2, lg: 4 }} alignItems={"flex-start"}>
+                  {/* <HStack gap={{ base: 2, lg: 4 }} alignItems={"flex-start"}>
                     <Icon
                       transform={"translateY(8px)"}
                       color={"gray.500"}
@@ -107,7 +109,7 @@ const AppPage = () => {
                         })}
                       </Text>
                     </Box>
-                  </HStack>
+                  </HStack> */}
                   <HStack gap={{ base: 2, lg: 4 }} alignItems={"flex-start"}>
                     <Icon
                       transform={"translateY(4px)"}
