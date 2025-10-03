@@ -140,6 +140,15 @@ create_or_update_secret "microsoft-entra-client-secret" "your-microsoft-entra-cl
 create_or_update_secret "microsoft-entra-issuer" "your-microsoft-entra-issuer"
 create_or_update_secret "admin-emails" "admin@yourcompany.com"
 
+# Second pass: Ensure all secrets now have proper permissions (after creation)
+echo ""
+echo "🔑 Ensuring all secrets have proper permissions (second pass)..."
+for secret in database-url nextauth-secret nextauth-url google-client-id google-client-secret cloudinary-api-key cloudinary-api-secret cloudinary-name microsoft-entra-client-id microsoft-entra-client-secret microsoft-entra-issuer admin-emails; do
+  grant_secret_access $secret "serviceAccount:$CLOUD_BUILD_SA" "roles/secretmanager.secretAccessor"
+  grant_secret_access $secret "serviceAccount:$COMPUTE_SA" "roles/secretmanager.secretAccessor"
+  grant_secret_access $secret "serviceAccount:$CLOUD_RUN_SA" "roles/secretmanager.secretAccessor"
+done
+
 # Set up IAM permissions
 echo "🔑 Setting up IAM permissions..."
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
@@ -165,20 +174,31 @@ grant_secret_access() {
   local member=$2
   local role=$3
   
+  # Check if secret exists first
+  if ! gcloud secrets describe $secret_name >/dev/null 2>&1; then
+    echo "⚠️  Secret $secret_name does not exist yet, skipping permission grant..."
+    return
+  fi
+  
   # Check if permission already exists
   EXISTING_BINDING=$(gcloud secrets get-iam-policy $secret_name --format="value(bindings[?role=='$role'].members[])" 2>/dev/null | grep -c "$member" || echo "0")
   
   if [ "$EXISTING_BINDING" -eq 0 ]; then
-    echo "Granting $role to $member for $secret_name..."
-    gcloud secrets add-iam-policy-binding $secret_name \
+    echo "🔑 Granting $role to $member for $secret_name..."
+    if gcloud secrets add-iam-policy-binding $secret_name \
       --member="$member" \
-      --role="$role" >/dev/null 2>&1
+      --role="$role" >/dev/null 2>&1; then
+      echo "✅ Successfully granted permission for $secret_name"
+    else
+      echo "❌ Failed to grant permission for $secret_name to $member"
+    fi
   else
     echo "✅ Permission already exists for $secret_name ($member)"
   fi
 }
 
-# Grant permissions to all secrets
+# Grant permissions to all secrets (first pass - some secrets might not exist yet)
+echo "🔑 Setting up initial secret permissions..."
 for secret in database-url nextauth-secret nextauth-url google-client-id google-client-secret cloudinary-api-key cloudinary-api-secret cloudinary-name microsoft-entra-client-id microsoft-entra-client-secret microsoft-entra-issuer admin-emails; do
   grant_secret_access $secret "serviceAccount:$CLOUD_BUILD_SA" "roles/secretmanager.secretAccessor"
   grant_secret_access $secret "serviceAccount:$COMPUTE_SA" "roles/secretmanager.secretAccessor"
