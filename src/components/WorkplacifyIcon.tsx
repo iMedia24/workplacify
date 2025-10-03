@@ -35,8 +35,8 @@ export const WorkplacifyIcon = () => {
           y2="356"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#F54A48"></stop>
-          <stop offset="1" stopColor="#FA982F"></stop>
+          <stop stopColor="#db2739"></stop>
+          <stop offset="1" stopColor="#c21e2e"></stop>
         </linearGradient>
         <linearGradient
           id="paint1_linear_29_20"
@@ -46,8 +46,8 @@ export const WorkplacifyIcon = () => {
           y2="368.064"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#F54A48"></stop>
-          <stop offset="1" stopColor="#FA982F"></stop>
+          <stop stopColor="#db2739"></stop>
+          <stop offset="1" stopColor="#c21e2e"></stop>
         </linearGradient>
       </defs>
     </svg>
