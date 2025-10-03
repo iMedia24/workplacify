@@ -127,6 +127,7 @@ create_or_update_secret() {
 # Create/update secrets
 create_or_update_secret "database-url" "$DATABASE_URL"
 create_or_update_secret "nextauth-secret" "$(openssl rand -base64 32)"
+create_or_update_secret "nextauth-url" "https://your-app-url.run.app"
 
 # Placeholder secrets - UPDATE THESE WITH YOUR ACTUAL VALUES
 create_or_update_secret "google-client-id" "your-google-client-id"
@@ -178,7 +179,7 @@ grant_secret_access() {
 }
 
 # Grant permissions to all secrets
-for secret in database-url nextauth-secret google-client-id google-client-secret cloudinary-api-key cloudinary-api-secret cloudinary-name microsoft-entra-client-id microsoft-entra-client-secret microsoft-entra-issuer admin-emails; do
+for secret in database-url nextauth-secret nextauth-url google-client-id google-client-secret cloudinary-api-key cloudinary-api-secret cloudinary-name microsoft-entra-client-id microsoft-entra-client-secret microsoft-entra-issuer admin-emails; do
   grant_secret_access $secret "serviceAccount:$CLOUD_BUILD_SA" "roles/secretmanager.secretAccessor"
   grant_secret_access $secret "serviceAccount:$COMPUTE_SA" "roles/secretmanager.secretAccessor"
   grant_secret_access $secret "serviceAccount:$CLOUD_RUN_SA" "roles/secretmanager.secretAccessor"
@@ -211,6 +212,7 @@ echo "✅ GCP setup complete!"
 echo ""
 echo "📝 Next steps:"
 echo "1. Update the secrets with your actual values:"
+echo "   gcloud secrets versions add nextauth-url --data-file=<(echo -n 'https://your-app.run.app')"
 echo "   gcloud secrets versions add google-client-id --data-file=<(echo -n 'your-actual-client-id')"
 echo "   gcloud secrets versions add google-client-secret --data-file=<(echo -n 'your-actual-client-secret')"
 echo "   # ... repeat for other secrets"

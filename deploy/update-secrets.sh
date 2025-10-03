@@ -85,7 +85,7 @@ update_secret_visible() {
 
 echo ""
 echo "🔍 Current secret status:"
-for secret in google-client-id google-client-secret cloudinary-api-key cloudinary-api-secret cloudinary-name microsoft-entra-client-id microsoft-entra-client-secret microsoft-entra-issuer admin-emails; do
+for secret in nextauth-url google-client-id google-client-secret cloudinary-api-key cloudinary-api-secret cloudinary-name microsoft-entra-client-id microsoft-entra-client-secret microsoft-entra-issuer admin-emails; do
   current=$(gcloud secrets versions access latest --secret="$secret" 2>/dev/null || echo "NOT_FOUND")
   if [[ "$current" == "your-"* ]] || [ "$current" = "NOT_FOUND" ]; then
     echo "❌ $secret: needs updating"
@@ -98,6 +98,7 @@ echo ""
 echo "📋 Update the secrets below. Press Enter to keep current values."
 
 # Update each secret with actual values
+update_secret_visible "nextauth-url" "NextAuth URL (your app's URL, e.g., https://your-app.run.app)"
 update_secret "google-client-id" "Google OAuth Client ID (from Google Cloud Console)"
 update_secret "google-client-secret" "Google OAuth Client Secret"
 update_secret "cloudinary-api-key" "Cloudinary API Key"
@@ -120,7 +121,7 @@ echo "✅ Secret update process completed!"
 # Verify critical secrets are set
 echo ""
 echo "🔍 Verifying critical secrets..."
-critical_secrets=("google-client-id" "google-client-secret" "cloudinary-api-key" "cloudinary-api-secret" "cloudinary-name")
+critical_secrets=("nextauth-url" "google-client-id" "google-client-secret" "cloudinary-api-key" "cloudinary-api-secret" "cloudinary-name")
 all_good=true
 
 for secret in "${critical_secrets[@]}"; do
