@@ -130,12 +130,12 @@ const SchedulePage = () => {
               defaultValue={"list-of-desks"}
             >
               <Tabs.List>
-                <Tabs.Trigger value="list-of-desks">
+                <Tabs.Trigger value="list-of-desks" px={4} py={2}>
                   {t("listOfDesks")}
                 </Tabs.Trigger>
                 {getFloorsForCurrentOfficeQuery.data?.map((floor) => {
                   return (
-                    <Tabs.Trigger key={floor.id} value={floor.id}>
+                    <Tabs.Trigger key={floor.id} value={floor.id} px={4} py={2}>
                       {floor.name}
                     </Tabs.Trigger>
                   );
